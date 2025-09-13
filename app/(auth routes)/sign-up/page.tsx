@@ -20,7 +20,7 @@ export default function SignUpPage() {
       const data: AuthResponse = await authClient.register(email, password);
       setUser(data.user);
       router.push('/profile');
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof AxiosError) {
         setError(err.response?.data?.message || 'Registration failed');
       } else if (err instanceof Error) {
@@ -66,7 +66,7 @@ export default function SignUpPage() {
           </button>
         </div>
 
-        <p className={css.error}>{error}</p>
+        {error && <p className={css.error}>{error}</p>}
       </form>
     </main>
   );

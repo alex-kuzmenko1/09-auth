@@ -2,7 +2,6 @@ import Link from "next/link";
 import css from "./Header.module.css";
 import type { TagList } from "@/types/note";
 import TagsMenu from "../TagsMenu/TagsMenu";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import AuthNavigation from '../AuthNavigation/AuthNavigation';
 
 export default async function Header() {
@@ -23,6 +22,8 @@ export default async function Header() {
           <li className={css.navigationItem}>
             <TagsMenu tags={tags} />
           </li>
+          {/* Добавляем AuthNavigation */}
+          <AuthNavigation />
         </ul>
       </nav>
     </header>

@@ -1,18 +1,22 @@
-
 import axios from 'axios';
 import { User } from '../../types/user';
 
-const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? '') + '/api';
+const baseURL = 'https://notehub-api.goit.study';
 
 export const serverApi = {
   async getUserFromServer(cookiesHeader?: string) {
-    const res = await axios.get(`${baseURL}/users/me`, {
-      headers: {
-        Cookie: cookiesHeader ?? '',
-      },
-      withCredentials: true,
-    });
-    return res.data as User;
+    try {
+      const res = await axios.get(`${baseURL}/users/me`, {
+        headers: {
+          Cookie: cookiesHeader ?? '',
+        },
+        withCredentials: true,
+      });
+      return res.data as User;
+    } catch (error) {
+      console.error('Get user from server error:', error);
+      throw error;
+    }
   },
 
   async getSession(cookiesHeader?: string) {
@@ -21,22 +25,34 @@ export const serverApi = {
         headers: { Cookie: cookiesHeader ?? '' },
         withCredentials: true,
       });
-      return res.data as User | null;
-    } catch {
-      return null; // err убран, чтобы ESLint не ругался
+      
+      // Обрабатываем разные форматы ответа от API
+      if (res.data) {
+        return (res.data.user || res.data) as User;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Get session from server error:', error);
+      return null;
     }
   },
 
-  // Для серверного отримання нотаток
+  // Для серверного получения заметок
   async getNotesServer(
     cookiesHeader?: string,
     params?: Record<string, string | number | boolean>
   ) {
-    const res = await axios.get(`${baseURL}/notes`, {
-      headers: { Cookie: cookiesHeader ?? '' },
-      withCredentials: true,
-      params,
-    });
-    return res.data;
+    try {
+      const res = await axios.get(`${baseURL}/notes`, {
+        headers: { Cookie: cookiesHeader ?? '' },
+        withCredentials: true,
+        params,
+      });
+      return res.data;
+    } catch (error) {
+      console.error('Get notes from server error:', error);
+      throw error;
+    }
   },
 };

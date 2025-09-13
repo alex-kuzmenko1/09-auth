@@ -1,28 +1,81 @@
 'use client';
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '../../lib/store/authStore';
-import { User } from '../../types/user';
+import { authClient } from '../../lib/api/clientApi';
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((state) => state.user);
-  const setUser = useAuthStore((state) => state.setUser);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export default function AuthProvider({ children }: AuthProviderProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const pathname = usePathname();
   const router = useRouter();
+  
+  const { setUser, clearIsAuthenticated, isAuthenticated } = useAuthStore();
+
+  // Определяем, является ли маршрут приватным
+  const isPrivateRoute = pathname.startsWith('/profile') || pathname.startsWith('/notes');
+  const isAuthRoute = pathname === '/sign-in' || pathname === '/sign-up';
 
   useEffect(() => {
-    const checkAuth = () => {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser) as User);
-      } else {
-        router.push('/sign-in');
+    const checkAuth = async () => {
+      try {
+        console.log('AuthProvider: Checking session...');
+        const user = await authClient.session();
+        
+        if (user) {
+          console.log('AuthProvider: User found:', user);
+          setUser(user);
+          
+          // Если пользователь авторизован и находится на странице auth, перенаправляем
+          if (isAuthRoute) {
+            router.push('/profile');
+          }
+        } else {
+          console.log('AuthProvider: No user session');
+          clearIsAuthenticated();
+          
+          // Если пользователь не авторизован и на приватной странице, перенаправляем
+          if (isPrivateRoute) {
+            router.push('/sign-in');
+          }
+        }
+      } catch (error) {
+        console.error('AuthProvider: Session check failed:', error);
+        clearIsAuthenticated();
+        
+        if (isPrivateRoute) {
+          router.push('/sign-in');
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (!user) {
-      checkAuth();
-    }
-  }, [user, setUser, router]);
+    checkAuth();
+  }, [pathname, setUser, clearIsAuthenticated, router, isPrivateRoute, isAuthRoute]);
+
+  // Показываем лоадер во время проверки
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  // Если это приватная страница и пользователь не авторизован, не показываем контент
+  if (isPrivateRoute && !isAuthenticated) {
+    return null;
+  }
 
   return <>{children}</>;
 }

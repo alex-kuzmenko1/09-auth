@@ -10,29 +10,45 @@ export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
   const setUser = useAuthStore((state) => state.setUser);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
     try {
-      // Пытаемся логин
-      const data = await authClient.login(email, password);
+      console.log('Attempting login...');
+      
+      // Используем обновленную функцию login
+      const authResponse = await authClient.login(email, password);
+      
+      console.log('Login response:', authResponse);
+      
+      if (!authResponse.user) {
+        throw new Error('No user data received');
+      }
 
-      // Если сервер не вернул user, проверяем сессию
-      const user = data.user ?? (await authClient.session());
-      if (!user) throw new Error('Login failed');
-
-      setUser(user);
+      setUser(authResponse.user);
+      console.log('User set in store:', authResponse.user);
+      
       router.push('/profile');
     } catch (err: unknown) {
+      console.error('Login error:', err);
+      
       if (err instanceof AxiosError) {
-        setError(err.response?.data?.message || 'Login failed');
+        const errorMessage = err.response?.data?.message || err.message;
+        setError(errorMessage);
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Login failed');
+        setError('Login failed. Please try again.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -40,16 +56,18 @@ export default function SignInPage() {
     <main className={css.mainContent}>
       <form className={css.form} onSubmit={handleSubmit}>
         <h1 className={css.formTitle}>Sign in</h1>
-
+        
         <div className={css.formGroup}>
           <label htmlFor="email">Email</label>
           <input
             id="email"
             type="email"
+            name="email"
             className={css.input}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -58,16 +76,22 @@ export default function SignInPage() {
           <input
             id="password"
             type="password"
+            name="password"
             className={css.input}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
           />
         </div>
 
         <div className={css.actions}>
-          <button type="submit" className={css.submitButton}>
-            Log in
+          <button 
+            type="submit" 
+            className={css.submitButton}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Logging in...' : 'Log in'}
           </button>
         </div>
 

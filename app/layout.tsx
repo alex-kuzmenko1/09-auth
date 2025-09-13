@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import TanStackProvider from "@/components/TanStackProvider/TanStackProvider";
+import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import "@/globals.css";
 
 const geistSans = Geist({
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "NoteHub",
     description: "Створюй, шукай і керуй своїми нотатками швидко та просто з NoteHub.",
-    url: "https://07-routing-nextjs-silk-five.vercel.app",
+    url: "https://09-auth-gold-one.vercel.app", // Обновил на ваш URL
     images: [
       {
         url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
@@ -53,10 +54,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable}`}
       >
         <TanStackProvider>
-          <Header />
-          {children}
-          <Footer />
-          {modal}
+          <AuthProvider>
+            <Header />
+            {children}
+            <Footer />
+            {modal}
+          </AuthProvider>
         </TanStackProvider>
       </body>
     </html>

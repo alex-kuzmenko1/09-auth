@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import NoteFormClient from "../../../../components/NoteForm/NoteformClient";
+import NoteFormClient from "../../../../../components/NoteForm/NoteformClient";
 import css from "./CreateNote.module.css";
 
 export const metadata: Metadata = {

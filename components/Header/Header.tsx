@@ -2,6 +2,8 @@ import Link from "next/link";
 import css from "./Header.module.css";
 import type { TagList } from "@/types/note";
 import TagsMenu from "../TagsMenu/TagsMenu";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import AuthNavigation from '../AuthNavigation/AuthNavigation';
 
 export default async function Header() {
   const tags: TagList[] = ["Todo", "Work", "Personal", "Meeting", "Shopping"];

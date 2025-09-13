@@ -4,7 +4,7 @@ import type { TagList } from "@/types/note";
 import TagsMenu from "../TagsMenu/TagsMenu";
 import AuthNavigation from '../AuthNavigation/AuthNavigation';
 
-export default async function Header() {
+export default function Header() {
   const tags: TagList[] = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
 
   return (
@@ -22,7 +22,8 @@ export default async function Header() {
           <li className={css.navigationItem}>
             <TagsMenu tags={tags} />
           </li>
-          {/* Добавляем AuthNavigation */}
+
+          {}
           <AuthNavigation />
         </ul>
       </nav>

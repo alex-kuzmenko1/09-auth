@@ -29,12 +29,13 @@ export default function NotesClient({ filter }: NotesClientProps) {
       },
     ],
     queryFn: () =>
-      fetchNotes({
-        page: currentPage,
-        limit: 12,
-        query: updateSearchNote,
-        filter,
-      }),
+  fetchNotes({
+    page: currentPage,
+    perPage: 12,       // вместо limit
+    search: updateSearchNote,
+    tag: filter,
+  }),
+
     placeholderData: keepPreviousData,
     refetchOnMount: false,
   });

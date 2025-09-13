@@ -1,22 +1,22 @@
+
 import axios from "axios";
 import { User, AuthResponse } from "../../types/user";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Axios для публичных запросов (login/register)
+
 const publicApi = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // важно для cookies
+  withCredentials: true, 
 });
 
-// Axios для защищённых запросов
+
 const privateApi = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
-  headers: { Authorization: `Bearer ${process.env.NOTEHUB_TOKEN}` },
+  withCredentials: true, 
 });
 
-// -------- AUTH --------
+
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const res = await publicApi.post("/auth/login", { email, password });
   return res.data;
@@ -38,11 +38,18 @@ export async function session(): Promise<User | null> {
 }
 
 // -------- NOTES --------
-export async function getNotes(params?: Record<string, string | number | boolean | undefined>) {
-  const res = await privateApi.get("/notes", { params });
-  return res.data;
+interface GetNotesParams {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  //  limit?: number; 
+  tag?: string;
 }
-export const fetchNotes = getNotes;
+
+export async function getNotes(params?: GetNotesParams) {
+  const res = await privateApi.get("/notes", { params });
+  return res.data; 
+}
 
 export async function fetchNoteById(id: string) {
   const res = await privateApi.get(`/notes/${id}`);
@@ -61,4 +68,5 @@ export async function deleteNote(id: string) {
 
 // -------- CLIENT OBJECTS --------
 export const authClient = { login, register, logout, session };
-export const notesClient = { fetchNotes, fetchNoteById, createNote, deleteNote };
+export const notesClient = { getNotes, fetchNoteById, createNote, deleteNote };
+export const fetchNotes = getNotes; 

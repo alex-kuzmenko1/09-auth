@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '../../../lib/api/clientApi';
 import { useAuthStore } from '../../../lib/store/authStore';
-import { AuthResponse } from '../../../types/user';
 import { AxiosError } from 'axios';
 import css from './SignInPage.module.css';
 
@@ -17,8 +16,14 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const data: AuthResponse = await authClient.login(email, password);
-      setUser(data.user);
+      // Пытаемся логин
+      const data = await authClient.login(email, password);
+
+      // Если сервер не вернул user, проверяем сессию
+      const user = data.user ?? (await authClient.session());
+      if (!user) throw new Error('Login failed');
+
+      setUser(user);
       router.push('/profile');
     } catch (err: unknown) {
       if (err instanceof AxiosError) {

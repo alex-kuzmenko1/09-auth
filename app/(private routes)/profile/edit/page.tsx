@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../../../lib/store/authStore';
+import { authClient } from '@/lib/api/clientApi';
 import css from './EditProfilePage.module.css';
 
 export default function EditProfilePage() {
@@ -11,16 +12,16 @@ export default function EditProfilePage() {
   const [email, setEmail] = useState(user?.email ?? '');
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (user) {
-      setUser({
-        ...user,
-        name,
-        email,
-      });
-      localStorage.setItem('user', JSON.stringify({ ...user, name, email }));
+    if (!user) return;
+
+    try {
+      const updatedUser = await authClient.updateUser({ name, email });
+      setUser(updatedUser);
+    } catch (err) {
+      console.error('Failed to update user:', err);
     }
 
     router.push('/profile');

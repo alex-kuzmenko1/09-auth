@@ -1,34 +1,38 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { serverApi } from './lib/api/serverApi';
 
-const AUTH_ROUTES = ["/profile", "/notes"];
+const AUTH_ROUTES = ['/profile', '/notes'];
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Проверяем только accessToken
-  const hasAuthCookie = !!req.cookies.get("accessToken");
+  const accessToken = req.cookies.get('accessToken')?.value;
+  const refreshToken = req.cookies.get('refreshToken')?.value;
 
-  // Для отладки (можно убрать на проде)
-  console.log("Middleware check:", {
-    pathname,
-    hasAuthCookie,
-  });
+  let hasValidSession = !!accessToken;
 
-  // Если роут приватный, а куки нет → редирект на /sign-in
-  if (AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
-    if (!hasAuthCookie) {
+  if (!accessToken && refreshToken) {
+    try {
+      const user = await serverApi.getSession(req.headers.get('cookie') ?? '');
+      if (user) hasValidSession = true;
+    } catch {
+      hasValidSession = false;
+    }
+  }
+
+  if (AUTH_ROUTES.some(route => pathname.startsWith(route))) {
+    if (!hasValidSession) {
       const url = req.nextUrl.clone();
-      url.pathname = "/sign-in";
+      url.pathname = '/sign-in';
       return NextResponse.redirect(url);
     }
   }
 
-  // Если юзер уже авторизован и заходит на sign-in/sign-up → редиректим в /profile
-  if (pathname === "/sign-in" || pathname === "/sign-up") {
-    if (hasAuthCookie) {
+  if (pathname === '/sign-in' || pathname === '/sign-up') {
+    if (hasValidSession) {
       const url = req.nextUrl.clone();
-      url.pathname = "/profile";
+      url.pathname = '/profile';
       return NextResponse.redirect(url);
     }
   }
@@ -37,12 +41,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    // Перехватываем все запросы, кроме:
-    // - /api
-    // - _next/static
-    // - _next/image
-    // - favicon.ico
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

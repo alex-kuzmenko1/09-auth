@@ -3,7 +3,7 @@
 import NoteList from "@/components/NoteList/NoteList";
 import Pagination from "@/components/Pagination/Pagination";
 import SearchBox from "@/components/SearchBox/SearchBox";
-import { fetchNotes } from "@/lib/api/clientApi";
+import { getNotes  } from "@/lib/api/clientApi";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChangeEvent, useState } from "react";
 import { useDebounce } from "use-debounce";
@@ -29,7 +29,7 @@ export default function NotesClient({ filter }: NotesClientProps) {
       },
     ],
     queryFn: () =>
-  fetchNotes({
+  getNotes ({
     page: currentPage,
     perPage: 12,       // вместо limit
     search: updateSearchNote,

@@ -1,20 +1,20 @@
-import axios from 'axios';
+import axios from "axios";
 
-// Создаем общий экземпляр axios с настройками для работы с cookies
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://notehub-api.goit.study";
+
 export const api = axios.create({
-  baseURL: 'https://notehub-api.goit.study',
-  withCredentials: true, // Важно для поддержки cookies
+  baseURL: BASE_URL,
+  withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
-// Можно добавить interceptors для обработки ошибок
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
+  (res) => res,
+  (err) => {
+    console.error("API error:", err?.response?.data ?? err.message);
+    return Promise.reject(err);
   }
 );
 

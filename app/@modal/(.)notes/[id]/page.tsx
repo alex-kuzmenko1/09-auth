@@ -6,16 +6,20 @@ import {
 } from "@tanstack/react-query";
 
 import PreviewModal from "./NotePreview.client";
+
 type Props = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 };
+
 export default async function NotePreview({ params }: Props) {
   const queryClient = new QueryClient();
-  const { id } = await params;
+  const { id } = params;
+
   await queryClient.prefetchQuery({
     queryKey: ["note", id],
     queryFn: () => fetchNoteById(id),
   });
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <PreviewModal />

@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuthStore } from '@/lib/store/authStore';
 import React from 'react';
 import css from './ProfilePage.module.css';

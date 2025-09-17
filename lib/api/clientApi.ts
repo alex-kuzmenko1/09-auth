@@ -1,5 +1,5 @@
 import axios from "axios";
-import { User, AuthResponse } from "../../types/user";
+import { User } from "../../types/user";
 
 const API_URL = `https://notehub-api.goit.study`;
 
@@ -14,7 +14,7 @@ const privateApi = axios.create({
 });
 
 // --- AUTH ---
-export async function login(email: string, password: string): Promise<AuthResponse> {
+export async function login(email: string, password: string): Promise<{ user: User; token: string }> {
   await publicApi.post("/auth/login", { email, password });
   await new Promise((resolve) => setTimeout(resolve, 100));
   const user = await session();
@@ -22,8 +22,8 @@ export async function login(email: string, password: string): Promise<AuthRespon
   return { user, token: "" };
 }
 
-export async function register(email: string, password: string): Promise<AuthResponse> {
- await publicApi.post("/auth/register", { email, password });
+export async function register(email: string, password: string): Promise<{ user: User; token: string }> {
+  await publicApi.post("/auth/register", { email, password });
   await new Promise((resolve) => setTimeout(resolve, 100));
   const user = await session();
   if (!user) throw new Error("Failed to get user session after registration");

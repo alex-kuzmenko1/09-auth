@@ -1,11 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useNoteStore } from '@/lib/store/noteStore';
-import { FormValues, NoteTag, TagList } from '@/types/note';
+import { FormValues, TagList } from '@/types/note';
 
 const tagOptions: TagList = ["All", "Work", "Personal", "Ideas", "Other"];
 
-export default function NoteForm() {
+type NoteFormProps = {
+  onClose?: () => void; // добавляем проп onClose
+};
+
+export default function NoteForm({ onClose }: NoteFormProps) {
   const { draft, setDraft, clearDraft } = useNoteStore();
   const [formValues, setFormValues] = useState<FormValues>(draft);
 
@@ -22,7 +26,8 @@ export default function NoteForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Submitting note:", formValues);
-    clearDraft(); // очищаем форму после отправки
+    clearDraft(); 
+    onClose?.(); // вызываем callback закрытия формы, если он передан
   };
 
   return (

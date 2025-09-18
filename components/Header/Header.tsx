@@ -1,24 +1,26 @@
-
 import Link from "next/link";
 import css from "./Header.module.css";
-import TagsMenu from "../TagsMenu/TagsMenu";
+
 import AuthNavigation from "../AuthNavigation/AuthNavigation";
-
-
-export type TagList = string[];
-
-const tags: TagList = ["All", "Work", "Personal", "Ideas", "Other"];
 
 export default function Header() {
   return (
     <header className={css.header}>
-      <div className={css.logo}>
-        <Link href="/">NoteHub</Link>
-      </div>
+      <Link href="/" aria-label="Home" className={css.navigationLink}>
+        NoteHub
+      </Link>
+      <nav aria-label="Main Navigation">
+        <ul className={css.navigation}>
+          <li className={css.navigationItem}>
+            <Link href="/" className={css.navigationLink}>
+              Home
+            </Link>
+          </li>
 
-      <TagsMenu tags={tags} /> {}
-      
-      <AuthNavigation />
+          <AuthNavigation />
+          <li className={css.navigationItem}></li>
+        </ul>
+      </nav>
     </header>
   );
 }

@@ -1,15 +1,28 @@
-// lib/store/noteStore.ts
+import { NewNote } from "@/types/note";
 import { create } from "zustand";
-import { FormValues } from "@/types/note";
-
-type NoteStore = {
-  draft: FormValues;
-  setDraft: (draft: Partial<FormValues>) => void;
+import { persist } from "zustand/middleware";
+type NoteDraftStore = {
+  draft: NewNote;
+  setDraft: (note: NewNote) => void;
   clearDraft: () => void;
 };
 
-export const useNoteStore = create<NoteStore>((set) => ({
-  draft: { title: "", content: "", tag: "All" }, 
-  setDraft: (draft) => set((state) => ({ draft: { ...state.draft, ...draft } })),
-  clearDraft: () => set({ draft: { title: "", content: "", tag: "All" } }),
-}));
+const initialDraft: NewNote = {
+  title: "",
+  content: "",
+  tag: "Todo",
+};
+
+export const useNoteDraftStore = create<NoteDraftStore>()(
+  persist(
+    (set) => ({
+      draft: initialDraft,
+      setDraft: (note) => set(() => ({ draft: note })),
+      clearDraft: () => set(() => ({ draft: initialDraft })),
+    }),
+    {
+      name: "note-draft",
+      partialize: (state) => ({ draft: state.draft }),
+    }
+  )
+);

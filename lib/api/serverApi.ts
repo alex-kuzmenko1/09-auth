@@ -1,22 +1,63 @@
-import axios from 'axios';
+// lib/api/serverApi.ts
 
-export const serverApi = {
-  async getUser(token: string) {
-    const res = await axios.get('/api/user', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.data;
-  },
+import { cookies } from "next/headers";
+import { nextServer } from "./api";
+import { User } from "@/types/user";
+import { Note } from "@/types/note";
 
-  async refreshSessionIfNeeded(refreshToken: string) {
-    if (!refreshToken) return null;
-    try {
-      const res = await axios.post('/api/auth/refresh', { refreshToken });
-      return res.data;
-    } catch {
-      return null;
-    }
-  },
+export const checkServerSession = async () => {
+  const cookieStore = await cookies();
+  const res = await nextServer.get("/auth/session", {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
+
+  return res;
 };
 
-export default serverApi;
+export interface FetchNotesResponse {
+  notes: Note[];
+  totalPages: number;
+}
+
+export const fetchServerNotes = async (
+  page: number,
+  mySearchNote: string,
+  tag?: string
+): Promise<FetchNotesResponse> => {
+  const cookieStore = await cookies();
+
+  const response = await nextServer.get<FetchNotesResponse>("/notes", {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+    params: {
+      page,
+      search: mySearchNote,
+      tag,
+    },
+  });
+  return response.data;
+};
+
+export const getServerMe = async (): Promise<User> => {
+  const cookieStore = await cookies();
+  const { data } = await nextServer.get<User>("/users/me", {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
+  return data;
+};
+
+// ✅ Исправленная функция fetchServerNoteById
+export const fetchServerNoteById = async (id: string): Promise<Note> => {
+  const cookieStore = await cookies();
+  const { data } = await nextServer.get<Note>(`/notes/${id}`, {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
+  return data;
+};

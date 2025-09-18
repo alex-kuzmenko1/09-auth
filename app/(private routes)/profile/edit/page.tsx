@@ -1,65 +1,66 @@
-'use client';
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '../../../../lib/store/authStore';
-import { authClient } from '@/lib/api/clientApi';
-import css from './EditProfilePage.module.css';
-
-export default function EditProfilePage() {
-  const user = useAuthStore((state) => state.user);
-  const setUser = useAuthStore((state) => state.setUser);
-  const [name, setName] = useState(user?.name ?? '');
-  const [email, setEmail] = useState(user?.email ?? '');
+"use client";
+import { useEffect, useState } from "react";
+import css from "./EditProfilePage.module.css";
+import { getMe, updateMe } from "@/lib/api/clientApi";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+// import Image from "next/image";
+export default function Edit() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  useEffect(() => {
+    getMe().then((user) => {
+      setUsername(user.username ?? "");
+      setEmail(user.email ?? "");
+    });
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!user) return;
-
-    try {
-      const updatedUser = await authClient.updateUser({ name, email });
-      setUser(updatedUser);
-    } catch (err) {
-      console.error('Failed to update user:', err);
-    }
-
-    router.push('/profile');
+  const handleSaveUser = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await updateMe({ username });
   };
-
   return (
     <main className={css.mainContent}>
-      <form className={css.form} onSubmit={handleSubmit}>
+      <div className={css.profileCard}>
         <h1 className={css.formTitle}>Edit Profile</h1>
 
-        <div className={css.formGroup}>
-          <label htmlFor="name">Name</label>
-          <input
-            id="name"
-            type="text"
-            className={css.input}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
+        <Image
+          src="/my-avatar.png.png"
+          alt="User Avatar"
+          width={120}
+          height={120}
+          className={css.avatar}
+        />
 
-        <div className={css.formGroup}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            className={css.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+        <form className={css.profileInfo} onSubmit={handleSaveUser}>
+          <div className={css.usernameWrapper}>
+            <label htmlFor="username">Username:</label>
+            <input
+              id="username"
+              value={username}
+              type="text"
+              className={css.input}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
 
-        <div className={css.actions}>
-          <button type="submit" className={css.submitButton}>
-            Save
-          </button>
-        </div>
-      </form>
+          <p>Email: {email}</p>
+
+          <div className={css.actions}>
+            <button type="submit" className={css.saveButton}>
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/profile")}
+              className={css.cancelButton}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </main>
   );
 }

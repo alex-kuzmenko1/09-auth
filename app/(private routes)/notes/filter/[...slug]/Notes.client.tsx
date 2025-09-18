@@ -3,22 +3,21 @@
 import NoteList from "@/components/NoteList/NoteList";
 import Pagination from "@/components/Pagination/Pagination";
 import SearchBox from "@/components/SearchBox/SearchBox";
-import { getNotes  } from "@/lib/api/clientApi";
+import { fetchNotes } from "@/lib/api/clientApi";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChangeEvent, useState } from "react";
 import { useDebounce } from "use-debounce";
+import css from "./Notes.client.module.css";
 import Link from "next/link";
-import css from "../../[id]/NoteDetails.module.css";
 
-interface NotesClientProps {
+interface NoteDeClientProps {
   filter?: string;
 }
-
-export default function NotesClient({ filter }: NotesClientProps) {
+export default function NotesClient({ filter }: NoteDeClientProps) {
+  // const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchNote, setSearchNote] = useState("");
   const [updateSearchNote] = useDebounce(searchNote, 300);
-
   const { data } = useQuery({
     queryKey: [
       "notes",
@@ -28,20 +27,21 @@ export default function NotesClient({ filter }: NotesClientProps) {
         tag: filter,
       },
     ],
-    queryFn: () =>
-  getNotes ({
-    page: currentPage,
-    perPage: 12,       // вместо limit
-    search: updateSearchNote,
-    tag: filter,
-  }),
-
+    queryFn: () => fetchNotes(currentPage, updateSearchNote, filter),
     placeholderData: keepPreviousData,
     refetchOnMount: false,
   });
 
+  // const openModal = () => setIsModalOpen(true);
+
+  // const closeModal = () => setIsModalOpen(false);
   return (
     <div className={css.app}>
+      {/* {isModalOpen && (
+        <Modal onClose={closeModal}>
+          <NoteForm onClose={closeModal} />
+        </Modal>
+      )} */}
       <div className={css.toolbar}>
         <SearchBox
           value={searchNote}
@@ -50,7 +50,6 @@ export default function NotesClient({ filter }: NotesClientProps) {
             setCurrentPage(1);
           }}
         />
-
         {data && data?.totalPages > 1 && (
           <Pagination
             pageCount={data?.totalPages}

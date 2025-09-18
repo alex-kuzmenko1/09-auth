@@ -1,13 +1,9 @@
-// Преднастроенный экземпляр axios, используемый в clientApi и serverApi
-import axios from 'axios';
+import axios from "axios";
+import type { AxiosError } from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://notehub-api.goit.study';
+export type ApiError = AxiosError<{ error: string }>;
 
-export const api = axios.create({
-  baseURL: BASE_URL,
+export const nextServer = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL + "/api",
   withCredentials: true,
-  // timeout: 10000,
 });
-
-// Экспорт по-умолчанию и именованный экспорт для консистентности
-export default api;

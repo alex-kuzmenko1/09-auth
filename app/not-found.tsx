@@ -1,27 +1,29 @@
-import type { Metadata } from "next";
-
+import { Metadata } from "next";
+import css from "./page.module.css";
 export const metadata: Metadata = {
-  title: "Page not found — NoteHub",
-  description:
-    "Сторінка не знайдена. Можливо, нотатку видалено або URL неправильний.",
+  title: "Not found page",
+  description: "Not found page for work invalid routers",
   openGraph: {
-    title: "Page not found — NoteHub",
-    description:
-      "Сторінка не знайдена. Можливо, нотатку видалено або URL неправильний.",
-    url: "https://07-routing-nextjs-silk-five.vercel.app/not-found",
+    title: "Not found page",
+    description: "Not found page for work invalid routers",
+    url: "https://notehub.versel.app/not-found",
     images: [
       {
         url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+        width: 1200,
+        height: 630,
+        alt: "NoteHub",
       },
     ],
   },
 };
-
 export default function NotFound() {
   return (
-    <main>
-      <h1>404 — Page not found</h1>
-      <p>На жаль, такої сторінки не існує.</p>
-    </main>
+    <div>
+      <h1 className={css.title}>404 - Page not found</h1>
+      <p className={css.description}>
+        Sorry, the page you are looking for does not exist.
+      </p>
+    </div>
   );
 }

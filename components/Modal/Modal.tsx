@@ -1,35 +1,38 @@
-import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import css from './Modal.module.css';
-
+"use client";
+import { createPortal } from "react-dom";
+import css from "./Modal.module.css";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 interface ModalProps {
-  children: React.ReactNode;
   onClose: () => void;
+  // children: React.ReactNode | ((onClose: () => void) => React.ReactNode);
+  children: React.ReactNode;
 }
+export default function Modal({ onClose, children }: ModalProps) {
+  const router = useRouter();
 
-const Modal: React.FC<ModalProps> = ({ children, onClose }) => {
+  const close = () => router.back();
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+      close();
+    }
+  };
+
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    document.body.style.overflow = 'hidden';
-
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
     };
   }, [onClose]);
-
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
-
   return createPortal(
     <div
       className={css.backdrop}
@@ -38,11 +41,10 @@ const Modal: React.FC<ModalProps> = ({ children, onClose }) => {
       onClick={handleBackdropClick}
     >
       <div className={css.modal}>
+        {/* {typeof children === "function" ? children(onClose) : children} */}
         {children}
       </div>
     </div>,
     document.body
   );
-};
-
-export default Modal;
+}

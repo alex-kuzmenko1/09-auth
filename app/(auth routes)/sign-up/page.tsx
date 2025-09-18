@@ -1,61 +1,38 @@
-'use client';
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { authClient } from '../../../lib/api/clientApi';
-import { useAuthStore } from '../../../lib/store/authStore';
-import { AxiosError } from 'axios';
-import css from './SignUpPage.module.css';
-
-export default function SignUpPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const setUser = useAuthStore((state) => state.setUser);
+"use client";
+import { useRouter } from "next/navigation";
+import css from "./SignUpPage.module.css";
+import { useState } from "react";
+import { register, RegisterRequest } from "@/lib/api/clientApi";
+import { ApiError } from "@/lib/api/api";
+import { useAuthStore } from "@/lib/store/authStore";
+export default function SignUp() {
   const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
+  const [error, setError] = useState("");
+  const setUser = useAuthStore((state) => state.setUser);
+  const handleSubmit = async (formData: FormData) => {
     try {
-      console.log('Attempting registration...');
-      
-      const authResponse = await authClient.register(email, password);
-      
-      console.log('Registration response:', authResponse);
-      
-      if (!authResponse.user) {
-        throw new Error('No user data received');
-      }
+      const formValues = Object.fromEntries(formData) as RegisterRequest;
 
-      setUser(authResponse.user);
-      console.log('User set in store:', authResponse.user);
-      
-      router.push('/profile');
-    } catch (err: unknown) {
-      console.error('Registration error:', err);
-      
-      if (err instanceof AxiosError) {
-        const errorMessage = err.response?.data?.message || err.message;
-        setError(errorMessage);
-      } else if (err instanceof Error) {
-        setError(err.message);
+      const res = await register(formValues);
+
+      if (res) {
+        setUser(res);
+        router.push("/profile");
       } else {
-        setError('Registration failed. Please try again.');
+        setError("Invalid email or password");
       }
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      setError(
+        (error as ApiError).response?.data?.error ??
+          (error as ApiError).message ??
+          "Oops... some error"
+      );
     }
   };
-
   return (
     <main className={css.mainContent}>
       <h1 className={css.formTitle}>Sign up</h1>
-      
-      <form className={css.form} onSubmit={handleSubmit}>
+      <form action={handleSubmit} className={css.form}>
         <div className={css.formGroup}>
           <label htmlFor="email">Email</label>
           <input
@@ -63,10 +40,7 @@ export default function SignUpPage() {
             type="email"
             name="email"
             className={css.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
-            disabled={isLoading}
           />
         </div>
 
@@ -77,23 +51,15 @@ export default function SignUpPage() {
             type="password"
             name="password"
             className={css.input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
-            disabled={isLoading}
           />
         </div>
 
         <div className={css.actions}>
-          <button 
-            type="submit" 
-            className={css.submitButton}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Registering...' : 'Register'}
+          <button type="submit" className={css.submitButton}>
+            Register
           </button>
         </div>
-
         {error && <p className={css.error}>{error}</p>}
       </form>
     </main>

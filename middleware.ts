@@ -1,41 +1,82 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { serverApi } from './lib/api/serverApi'; // убедись, что экспорт default
 
-export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
 
-  const accessToken = req.cookies.get('accessToken')?.value;
-  const refreshToken = req.cookies.get('refreshToken')?.value;
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { parse } from "cookie";
+import { checkServerSession } from "./lib/api/serverApi";
 
-  let hasValidSession = false;
+const privateRoutes = ["/profile"];
+const publicRoutes = ["/sign-in", "/sign-up"];
 
-  if (accessToken) {
-    hasValidSession = true;
-  } else if (refreshToken) {
-    try {
-      const user = await serverApi.getUser(refreshToken); // серверная проверка
-      if (user) hasValidSession = true;
-    } catch {
-      hasValidSession = false;
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+  const isPrivateRoute = privateRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (!accessToken) {
+    if (refreshToken) {
+      const data = await checkServerSession();
+      const setCookie = data.headers["set-cookie"];
+
+      if (setCookie) {
+        const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
+        for (const cookieStr of cookieArray) {
+          const parsed = parse(cookieStr);
+          const options = {
+            expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
+            path: parsed.Path,
+            maxAge: Number(parsed["Max-Age"]),
+          };
+          if (parsed.accessToken)
+            cookieStore.set("accessToken", parsed.accessToken, options);
+          if (parsed.refreshToken)
+            cookieStore.set("refreshToken", parsed.refreshToken, options);
+        }
+
+        if (isPublicRoute) {
+          return NextResponse.redirect(new URL("/", request.url), {
+            headers: {
+              Cookie: cookieStore.toString(),
+            },
+          });
+        }
+
+        if (isPrivateRoute) {
+          return NextResponse.next({
+            headers: {
+              Cookie: cookieStore.toString(),
+            },
+          });
+        }
+      }
+    }
+
+    if (isPublicRoute) {
+      return NextResponse.next();
+    }
+
+    if (isPrivateRoute) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
     }
   }
 
-  if (['/profile', '/notes'].some(r => pathname.startsWith(r)) && !hasValidSession) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/sign-in';
-    return NextResponse.redirect(url);
+  if (isPublicRoute) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if ((pathname === '/sign-in' || pathname === '/sign-up') && hasValidSession) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/profile';
-    return NextResponse.redirect(url);
+  if (isPrivateRoute) {
+    return NextResponse.next();
   }
-
-  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ["/profile/:path*", "/sign-in", "/sign-up"],
 };

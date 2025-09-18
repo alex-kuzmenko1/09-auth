@@ -1,14 +1,16 @@
-export type Note = {
+export interface Note {
   id: string;
   title: string;
   content: string;
-  tag?: string;
-};
+  tag: "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
+  createdAt: string;
+  updatedAt: string;
+}
 
-export type FormValues = {
+export type TagList = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
+
+export type NewNote = {
   title: string;
   content: string;
-  tag: string;
+  tag: "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
 };
-
-export type TagList = ("All" | "Work" | "Personal" | "Ideas" | "Other")[];

@@ -1,82 +1,87 @@
-import axios from "axios";
-import { User } from "../../types/user";
+import { User } from "@/types/user";
+import { nextServer } from "@/lib/api/api";
 
-const API_URL = `https://notehub-api.goit.study`;
-
-const publicApi = axios.create({
-  baseURL: API_URL,
-  withCredentials: true,
-});
-
-const privateApi = axios.create({
-  baseURL: API_URL,
-  withCredentials: true,
-});
-
-// --- AUTH ---
-export async function login(email: string, password: string): Promise<{ user: User; token: string }> {
-  await publicApi.post("/auth/login", { email, password });
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  const user = await session();
-  if (!user) throw new Error("Failed to get user session after login");
-  return { user, token: "" };
+import { NewNote, Note } from "@/types/note";
+interface FetchNotesResponse {
+  notes: Note[];
+  totalPages: number;
 }
 
-export async function register(email: string, password: string): Promise<{ user: User; token: string }> {
-  await publicApi.post("/auth/register", { email, password });
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  const user = await session();
-  if (!user) throw new Error("Failed to get user session after registration");
-  return { user, token: "" };
-}
+export const fetchNotes = async (
+  page: number,
+  mySearchNote: string,
+  tag?: string
+): Promise<FetchNotesResponse> => {
+  const response = await nextServer.get<FetchNotesResponse>("/notes", {
+    params: {
+      page,
+      search: mySearchNote,
+      tag,
+    },
+  });
+  return response.data;
+};
 
-export async function logout() {
-  await privateApi.post("/auth/logout");
-}
+export const deleteNote = async (noteID: string): Promise<Note> => {
+  const response = await nextServer.delete<Note>(`/notes/${noteID}`, {});
+  return response.data;
+};
 
-export async function session(): Promise<User | null> {
-  try {
-    const res = await privateApi.get("/auth/session");
-    return res.data.user || res.data;
-  } catch {
-    return null;
-  }
-}
+export const createNote = async (newNote: NewNote): Promise<Note> => {
+  const response = await nextServer.post<Note>("/notes", newNote, {});
 
-// --- NEW: Update User ---
-export async function updateUser(data: { name?: string; email?: string }) {
-  const res = await privateApi.patch("/users/me", data);
-  return res.data as User;
-}
+  return response.data;
+};
 
-// --- NOTES ---
-interface GetNotesParams {
-  page?: number;
-  perPage?: number;
-  search?: string;
-  tag?: string;
-}
+export const fetchNoteById = async (noteID: string): Promise<Note> => {
+  const response = await nextServer.get<Note>(`/notes/${noteID}`, {});
+  return response.data;
+};
 
-export async function getNotes(params?: GetNotesParams) {
-  const res = await privateApi.get("/notes", { params });
+export type RegisterRequest = {
+  email: string;
+  password: string;
+};
+
+export const register = async (data: RegisterRequest) => {
+  const res = await nextServer.post<User>("/auth/register", data);
   return res.data;
-}
+};
 
-export async function fetchNoteById(id: string) {
-  const res = await privateApi.get(`/notes/${id}`);
+export type LoginRequest = {
+  email: string;
+  password: string;
+};
+
+export const login = async (data: LoginRequest) => {
+  const res = await nextServer.post<User>("/auth/login", data);
   return res.data;
-}
+};
+type CheckSessionRequest = {
+  success: boolean;
+};
 
-export async function createNote(data: { title: string; content: string; tag?: string }) {
-  const res = await privateApi.post("/notes", data);
+export const checkSession = async () => {
+  const res = await nextServer.get<CheckSessionRequest>("/auth/session");
+  return res.data.success;
+};
+
+export const getMe = async () => {
+  const { data } = await nextServer.get<User>("/users/me");
+  return data;
+};
+
+export const logout = async (): Promise<void> => {
+  await nextServer.post("/auth/logout");
+};
+
+export type UpdateUserRequest = {
+  username?: string;
+};
+
+export const updateMe = async (payload: UpdateUserRequest) => {
+  const res = await nextServer.patch<User>("/users/me", {
+    username: payload.username,
+  });
   return res.data;
-}
-
-export async function deleteNote(id: string) {
-  const res = await privateApi.delete(`/notes/${id}`);
-  return res.data;
-}
-
-// --- CLIENT OBJECTS ---
-export const authClient = { login, register, logout, session, updateUser };
-export const notesClient = { getNotes, fetchNoteById, createNote, deleteNote };
+};

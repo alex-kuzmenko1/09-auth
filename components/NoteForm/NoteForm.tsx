@@ -1,90 +1,99 @@
 "use client";
 
-import css from "./NoteForm.module.css";
-import { useId } from "react";
+import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createNote } from "@/lib/api/clientApi";
-import { useRouter } from "next/navigation";
-import { NewNote } from "@/types/note";
-import { useNoteDraftStore } from "@/lib/store/noteStore";
 
-type NoteFormProps = {
-  onClose: () => void; // ✅ добавляем пропс onClose
-};
+import { createNote } from "@/lib/api";
+import { useNoteStore } from "@/lib/store/noteStore";
+
+import css from "./NoteForm.module.css";
+
+export type NoteTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
+
+interface FormValues {
+  title: string;
+  content: string;
+  tag: NoteTag;
+}
+
+interface NoteFormProps {
+  onClose: () => void;
+}
 
 export default function NoteForm({ onClose }: NoteFormProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
-  const { draft, setDraft, clearDraft } = useNoteDraftStore();
-  const fieldId = useId();
+  const { draft, setDraft, clearDraft } = useNoteStore();
 
-  const handleChange = (
-    event: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    setDraft({
-      ...draft,
-      [event.target.name]: event.target.value,
-    });
-  };
+  const [formValues, setFormValues] = useState<FormValues>(draft);
+
+  useEffect(() => {
+    setFormValues(draft);
+  }, [draft]);
 
   const { mutate } = useMutation({
-    mutationFn: createNote,
+    mutationFn: (values: FormValues) => createNote(values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       clearDraft();
-      router.push("/notes/filter/All");
-      onClose(); // закрываем форму после успешного создания
+      onClose();
     },
-    onError: (mutationError: unknown) => {
-      console.log("Failed to create note:", mutationError);
+    onError: (err: unknown) => {
+      console.error("Failed to create note:", err);
     },
   });
 
-  const handleSubmit = (formData: FormData) => {
-    const values = Object.fromEntries(formData) as NewNote;
-    mutate(values);
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    const updated = { ...formValues, [name]: value } as FormValues;
+    setFormValues(updated);
+    setDraft(updated);
   };
 
-  const handleCancel = () => {
-    onClose(); // используем onClose при отмене
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    mutate(formValues);
   };
 
   return (
-    <form action={handleSubmit} className={css.form}>
+    <form className={css.form} onSubmit={handleSubmit}>
       <div className={css.formGroup}>
-        <label htmlFor={`${fieldId}-title`}>Title</label>
+        <label htmlFor="title">Title</label>
         <input
-          id={`${fieldId}-title`}
-          type="text"
+          id="title"
           name="title"
-          className={css.input}
-          defaultValue={draft?.title}
+          type="text"
+          value={formValues.title}
           onChange={handleChange}
+          className={css.input}
+          required
+          minLength={3}
+          maxLength={50}
         />
       </div>
 
       <div className={css.formGroup}>
-        <label htmlFor={`${fieldId}-content`}>Content</label>
+        <label htmlFor="content">Content</label>
         <textarea
-          id={`${fieldId}-content`}
+          id="content"
           name="content"
+          value={formValues.content}
+          onChange={handleChange}
           rows={8}
           className={css.textarea}
-          defaultValue={draft?.content}
-          onChange={handleChange}
+          maxLength={500}
         />
       </div>
 
       <div className={css.formGroup}>
-        <label htmlFor={`${fieldId}-tag`}>Tag</label>
+        <label htmlFor="tag">Tag</label>
         <select
-          id={`${fieldId}-tag`}
+          id="tag"
           name="tag"
-          className={css.select}
-          defaultValue={draft?.tag}
+          value={formValues.tag}
           onChange={handleChange}
+          className={css.select}
         >
           <option value="Todo">Todo</option>
           <option value="Work">Work</option>
@@ -95,15 +104,11 @@ export default function NoteForm({ onClose }: NoteFormProps) {
       </div>
 
       <div className={css.actions}>
+        <button type="button" className={css.cancelButton} onClick={onClose}>
+          Cancel
+        </button>
         <button type="submit" className={css.submitButton}>
           Create note
-        </button>
-        <button
-          type="button"
-          className={css.submitButton}
-          onClick={handleCancel}
-        >
-          Cancel
         </button>
       </div>
     </form>

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import css from "./Header.module.css";
+import type { TagList } from "@/types/note";
+import TagsMenu from "../TagsMenu/TagsMenu";
 
-import AuthNavigation from "../AuthNavigation/AuthNavigation";
+export default async function Header() {
+  const tags: TagList[] = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
 
-export default function Header() {
   return (
     <header className={css.header}>
       <Link href="/" aria-label="Home" className={css.navigationLink}>
@@ -16,9 +18,9 @@ export default function Header() {
               Home
             </Link>
           </li>
-
-          <AuthNavigation />
-          <li className={css.navigationItem}></li>
+          <li className={css.navigationItem}>
+            <TagsMenu tags={tags} />
+          </li>
         </ul>
       </nav>
     </header>

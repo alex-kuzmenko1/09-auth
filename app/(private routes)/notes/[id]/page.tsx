@@ -1,4 +1,4 @@
-// page.tsx
+
 import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import NoteDetailsClient from "./NoteDetails.client";
 import { Metadata } from "next";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const note: Note = await fetchServerNoteById(id); // ✅ Типизированный note
+  const note: Note = await fetchServerNoteById(id); 
 
   return {
     title: `Note: ${note.title}`,

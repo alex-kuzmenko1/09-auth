@@ -1,5 +1,4 @@
 "use client";
-import type { DebouncedState } from "use-debounce";
 import css from "./SearchBox.module.css";
 import type { ChangeEvent } from "react";
 interface SearchBoxProps {

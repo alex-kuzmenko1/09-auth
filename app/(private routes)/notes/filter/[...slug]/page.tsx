@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function Notes({ params }: Props) {
-  // await new Promise((r) => setTimeout(r, 3000));
+ 
   const slug = params.slug;
   const filter = slug[0] === "All" ? undefined : slug[0];
   const queryClient = new QueryClient();

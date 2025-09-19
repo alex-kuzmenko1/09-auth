@@ -9,10 +9,4 @@ body {
   background-color: #f8f9fa;
   font-family: var(--font-roboto), sans-serif;
 }
-/* body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: var(--font-roboto), sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-} */
+

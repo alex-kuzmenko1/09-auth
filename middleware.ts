@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { parse } from "cookie";
 import { checkServerSession } from "./lib/api/serverApi";
 
 const privateRoutes = ["/profile", "/notes"];
@@ -8,66 +6,57 @@ const publicRoutes = ["/sign-in", "/sign-up"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
-  const refreshToken = cookieStore.get("refreshToken")?.value;
+  const accessToken = request.cookies.get("accessToken")?.value;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
 
-  const isPublicRoute = publicRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-  const isPrivateRoute = privateRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+  const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
-  if (!accessToken) {
-    if (refreshToken) {
-      const data = await checkServerSession();
-      const setCookie = data.headers["set-cookie"];
+  // 🔹 Если нет accessToken, пробуем обновить по refreshToken
+  if (!accessToken && refreshToken) {
+    const refreshed = await checkServerSession();
 
-      if (setCookie) {
-        const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
-        for (const cookieStr of cookieArray) {
-          const parsed = parse(cookieStr);
-          const options = {
-            expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
-            path: parsed.Path,
-            maxAge: Number(parsed["Max-Age"]),
-          };
-          if (parsed.accessToken)
-            cookieStore.set("accessToken", parsed.accessToken, options);
-          if (parsed.refreshToken)
-            cookieStore.set("refreshToken", parsed.refreshToken, options);
-        }
-        if (isPublicRoute) {
-          return NextResponse.redirect(new URL("/", request.url), {
-            headers: {
-              Cookie: cookieStore.toString(),
-            },
-          });
-        }
-        if (isPrivateRoute) {
-          return NextResponse.next({
-            headers: {
-              Cookie: cookieStore.toString(),
-            },
-          });
-        }
+    if (refreshed && refreshed.accessToken) {
+      const response = NextResponse.next();
+
+      // ✅ Устанавливаем новые куки в ответ
+      response.cookies.set({
+        name: "accessToken",
+        value: refreshed.accessToken,
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60,
+      });
+
+      if (isPublicRoute) {
+        return NextResponse.redirect(new URL("/", request.url));
       }
+
+      return response;
     }
-    if (isPublicRoute) {
-      return NextResponse.next();
-    }
+
+    // ❌ если refreshToken невалиден
     if (isPrivateRoute) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
+    return NextResponse.next();
   }
-  if (isPublicRoute) {
+
+  // 🔹 Если вообще нет токенов
+  if (!accessToken && !refreshToken) {
+    if (isPrivateRoute) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // 🔹 Если пользователь авторизован и заходит на публичную страницу — редиректим
+  if (accessToken && isPublicRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (isPrivateRoute) {
-    return NextResponse.next();
-  }
+  // ✅ Всё ок — продолжаем
+  return NextResponse.next();
 }
 
 export const config = {

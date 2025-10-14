@@ -1,45 +1,45 @@
-"use client";
-import { deleteNote } from "@/lib/api/api";
-import type { Note } from "@/types/note";
 import css from "./NoteList.module.css";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteNote } from "@/lib/api/clientApi";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
+import type { Note } from "@/types/note";
 
-interface NoteListProps {
+export interface NoteListProps {
   notes: Note[];
 }
 
 export default function NoteList({ notes }: NoteListProps) {
   const queryClient = useQueryClient();
-  const { mutate } = useMutation({
+
+  const deleteTodo = useMutation({
     mutationFn: deleteNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["note"] });
-    },
-    onError: () => {
-      console.log("ddddd");
+      console.log("Note was removed");
     },
   });
 
+  const handleDelete = (noteId: string) => {
+    deleteTodo.mutate(noteId);
+  };
   return (
     <ul className={css.list}>
-      {
-        notes.map((note) => (
-          <li key={note.id} className={css.listItem}>
-            <h2 className={css.title}>{note.title}</h2>
-            <p className={css.content}>{note.content}</p>
-            <div className={css.footer}>
-              <span className={css.tag}>{note.tag}</span>
-              <Link className={css.link} href={`/notes/${note.id}`}>
-                View details
-              </Link>
-              <button className={css.button} onClick={() => mutate(note.id)}>
-                Delete
-              </button>
-            </div>
-          </li>
-        )) /* Набір елементів списку нотатків */
-      }
+      {notes.map((noteInfo) => (
+        <li className={css.listItem} key={noteInfo.id} id={noteInfo.id}>
+          <h2 className={css.title}>{noteInfo.title}</h2>
+          <p className={css.content}>{noteInfo.content}</p>
+          <div className={css.footer}>
+            <span className={css.tag}>{noteInfo.tag}</span>
+            <Link href={`/notes/${noteInfo.id}`}>View details</Link>
+            <button
+              className={css.button}
+              onClick={() => handleDelete(noteInfo.id)}
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      ))}
     </ul>
   );
 }

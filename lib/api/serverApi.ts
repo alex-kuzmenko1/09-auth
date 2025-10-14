@@ -1,46 +1,57 @@
-// 📁 lib/api/serverApi.ts
-import { api } from "./api";
-import { cookies } from "next/headers";
+import { nextServer } from "@/lib/api/api";
 import { User } from "@/types/user";
+import { cookies } from "next/headers";
+import { Note } from "@/types/note";
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export const checkServerSession = async (): Promise<AuthResponse | null> => {
-  try {
-    const cookieStore = await cookies();
-    const refreshToken = cookieStore.get("refreshToken")?.value;
-    if (!refreshToken) return null;
-
-    const { data } = await api.post<AuthResponse>("/auth/refresh", {
-      refreshToken,
-    });
-
-    return data;
-  } catch (err) {
-    console.error("checkServerSession error:", err);
-    return null;
-  }
+export const getServerMe = async (): Promise<User> => {
+  const cookieStore = await cookies();
+  const res = await nextServer.get("/users/me", {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
+  return res.data;
 };
 
-// ✅ Добавь эту функцию
-export const getProfile = async (): Promise<User | null> => {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
-    if (!accessToken) return null;
+interface NoteServiceProps {
+  query: string;
+  page: number;
+  tag?: string;
+}
 
-    const { data } = await api.get<User>("/auth/profile", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+export interface FetchNotesResponse {
+  notes: Note[];
+  totalPages: number;
+}
 
-    return data;
-  } catch (err) {
-    console.error("getProfile error:", err);
-    return null;
-  }
+export const fetchServerNotes = async ({
+  query,
+  page,
+  tag,
+}: NoteServiceProps) => {
+  const cookieStore = await cookies();
+
+  const response = await nextServer.get<FetchNotesResponse>("/notes", {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+    params: {
+      tag,
+      search: query,
+      page,
+      perPage: 12,
+    },
+  });
+  return response.data;
+};
+
+export const checkServerSession = async () => {
+  const cookieStore = await cookies();
+  const res = await nextServer.get("/auth/session", {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
+
+  return res;
 };

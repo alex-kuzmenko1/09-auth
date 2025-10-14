@@ -2,6 +2,7 @@ import Link from "next/link";
 import css from "./Header.module.css";
 import type { TagList } from "@/types/note";
 import TagsMenu from "../TagsMenu/TagsMenu";
+import AuthNavigation from "../AuthNavigation/AuthNavigation"; 
 
 export default async function Header() {
   const tags: TagList[] = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
@@ -11,6 +12,7 @@ export default async function Header() {
       <Link href="/" aria-label="Home" className={css.navigationLink}>
         NoteHub
       </Link>
+
       <nav aria-label="Main Navigation">
         <ul className={css.navigation}>
           <li className={css.navigationItem}>
@@ -18,9 +20,15 @@ export default async function Header() {
               Home
             </Link>
           </li>
+
           <li className={css.navigationItem}>
             <TagsMenu tags={tags} />
           </li>
+
+          {
+          
+        }
+          <AuthNavigation />
         </ul>
       </nav>
     </header>

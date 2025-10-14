@@ -1,30 +1,21 @@
-import Link from "next/link";
-import css from "./layout.module.css";
+"use client";
 
-export default function AuthLayout({
-  children,
-}: {
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+type Props = {
   children: React.ReactNode;
-}) {
-  return (
-    <section className={css.authWrapper}>
-      <div className={css.authContainer}>
-        {children}
-        <nav className={css.authNav}>
-          <p>
-            Already have an account?{" "}
-            <Link href="/sign-in" className={css.link}>
-              Sign In
-            </Link>
-          </p>
-          <p>
-            Don’t have an account yet?{" "}
-            <Link href="/sign-up" className={css.link}>
-              Sign Up
-            </Link>
-          </p>
-        </nav>
-      </div>
-    </section>
-  );
+};
+
+export default function Layout({ children }: Props) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+   
+    router.refresh();
+    setLoading(false);
+  }, [router]); 
+
+  return <>{loading ? <div>Loading ...</div> : children}</>;
 }

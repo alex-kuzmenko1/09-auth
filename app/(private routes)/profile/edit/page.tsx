@@ -1,59 +1,53 @@
 "use client";
-
-import css from "./page.module.css";
-import Image from "next/image";
-import { FormEvent, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import css from "./EditProfilePage.module.css";
+import { getMe, updateMe } from "@/lib/api/clientApi";
 import { useRouter } from "next/navigation";
-import { getProfile } from "@/lib/api/serverApi";
-import { api } from "@/lib/api/api";
+import Image from "next/image";
+import { useUserStore } from "@/lib/store/userStore";
 
-export default function EditProfilePage() {
+export default function Edit() {
   const router = useRouter();
+  const { user, setUser } = useUserStore();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [avatar, setAvatar] = useState("/avatar.png");
-
   useEffect(() => {
-    (async () => {
-      const user = await getProfile();
-      if (user) {
-        setUsername(user.username || "");
-        setEmail(user.email);
-        setAvatar(user.avatar || "/avatar.png");
-      }
-    })();
-  }, []);
+    getMe().then((user) => {
+      console.log("User from API:", user);
+      setUsername(user.username ?? "");
+      setEmail(user.email ?? "");
+      setUser(user);
+    });
+  }, [setUser]);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await api.patch("/users/me", { username });
+  const handleSaveUser = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const updatedUser = await updateMe({ username });
+    setUser(updatedUser);
     router.push("/profile");
   };
-
-  const handleCancel = () => router.push("/profile");
-
   return (
     <main className={css.mainContent}>
       <div className={css.profileCard}>
         <h1 className={css.formTitle}>Edit Profile</h1>
 
         <Image
-          src={avatar}
+          src={user?.avatar || "/my-avatar.png.png"}
           alt="User Avatar"
           width={120}
           height={120}
           className={css.avatar}
         />
 
-        <form onSubmit={handleSubmit} className={css.profileInfo}>
+        <form className={css.profileInfo} onSubmit={handleSaveUser}>
           <div className={css.usernameWrapper}>
             <label htmlFor="username">Username:</label>
             <input
               id="username"
-              type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="text"
               className={css.input}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
@@ -63,7 +57,11 @@ export default function EditProfilePage() {
             <button type="submit" className={css.saveButton}>
               Save
             </button>
-            <button type="button" onClick={handleCancel} className={css.cancelButton}>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className={css.cancelButton}
+            >
               Cancel
             </button>
           </div>

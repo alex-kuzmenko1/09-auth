@@ -1,113 +1,90 @@
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import c from "./NoteForm.module.css";
+
+import { useNoteDraftStore } from "@/lib/store/noteStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNote } from "@/lib/api/clientApi";
+import { useRouter } from "next/navigation";
 
-import { createNote } from "@/lib/api/api";
-import { useNoteStore } from "@/lib/store/noteStore";
+const TAGS = ["Todo", "Work", "Personal", "Meeting", "Shopping"] as const;
 
-import css from "./NoteForm.module.css";
-
-export type NoteTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
-
-interface FormValues {
-  title: string;
-  content: string;
-  tag: NoteTag;
-}
-
-interface NoteFormProps {
-  onClose: () => void;
-}
-
-export default function NoteForm({ onClose }: NoteFormProps) {
+export default function NoteForm() {
+  const { draft, setDraft, clearDraft } = useNoteDraftStore();
   const queryClient = useQueryClient();
-  const { draft, setDraft, clearDraft } = useNoteStore();
 
-  const [formValues, setFormValues] = useState<FormValues>(draft);
+  type Tag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
 
-  useEffect(() => {
-    setFormValues(draft);
-  }, [draft]);
+  const router = useRouter();
 
-  const { mutate } = useMutation({
-    mutationFn: (values: FormValues) => createNote(values),
+  const mutation = useMutation({
+    mutationFn: createNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       clearDraft();
-      onClose();
-    },
-    onError: (err: unknown) => {
-      console.error("Failed to create note:", err);
+      router.back();
     },
   });
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    const updated = { ...formValues, [name]: value } as FormValues;
-    setFormValues(updated);
-    setDraft(updated);
-  };
+  const handleAction = async (formData: FormData) => {
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+    const tag = formData.get("tag") as string;
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    mutate(formValues);
+    const newDraft = { title, content, tag: tag as (typeof TAGS)[number] };
+    setDraft(newDraft);
+    mutation.mutate(newDraft);
   };
 
   return (
-    <form className={css.form} onSubmit={handleSubmit}>
-      <div className={css.formGroup}>
+    <form action={handleAction} className={c.form}>
+      <div className={c.formGroup}>
         <label htmlFor="title">Title</label>
         <input
-          id="title"
-          name="title"
           type="text"
-          value={formValues.title}
-          onChange={handleChange}
-          className={css.input}
-          required
-          minLength={3}
-          maxLength={50}
+          name="title"
+          defaultValue={draft.title}
+          onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+          className={c.input}
         />
       </div>
 
-      <div className={css.formGroup}>
+      <div className={c.formGroup}>
         <label htmlFor="content">Content</label>
         <textarea
-          id="content"
           name="content"
-          value={formValues.content}
-          onChange={handleChange}
           rows={8}
-          className={css.textarea}
-          maxLength={500}
+          defaultValue={draft.content}
+          onChange={(e) => setDraft({ ...draft, content: e.target.value })}
+          className={c.textarea}
         />
       </div>
 
-      <div className={css.formGroup}>
+      <div className={c.formGroup}>
         <label htmlFor="tag">Tag</label>
         <select
-          id="tag"
           name="tag"
-          value={formValues.tag}
-          onChange={handleChange}
-          className={css.select}
+          defaultValue={draft.tag}
+          onChange={(e) => setDraft({ ...draft, tag: e.target.value as Tag })}
+          className={c.select}
         >
-          <option value="Todo">Todo</option>
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Meeting">Meeting</option>
-          <option value="Shopping">Shopping</option>
+          {TAGS.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
         </select>
       </div>
 
-      <div className={css.actions}>
-        <button type="button" className={css.cancelButton} onClick={onClose}>
+      <div className={c.actions}>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className={c.cancelButton}
+        >
           Cancel
         </button>
-        <button type="submit" className={css.submitButton}>
+        <button type="submit" className={c.submitButton}>
           Create note
         </button>
       </div>

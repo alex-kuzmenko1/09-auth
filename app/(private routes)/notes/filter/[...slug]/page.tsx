@@ -1,59 +1,51 @@
-import { fetchNotes } from "@/lib/api/api";
+import { fetchServerNotes } from "@/lib/api/serverApi";
 import {
-  dehydrate,
-  HydrationBoundary,
   QueryClient,
+  HydrationBoundary,
+  dehydrate,
 } from "@tanstack/react-query";
 import NotesClient from "./Notes.client";
-import type { Metadata } from "next";
+import { Metadata } from "next";
 
 type Props = {
   params: Promise<{ slug: string[] }>;
-  searchParams?: { page?: string; query?: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const filter = slug[0] === "All" ? "All Notes" : slug[0];
-
   return {
-    title: `NoteHub — ${filter}`,
-    description: `Перегляд нотаток із категорії: ${filter}.`,
+    title: `Filter ${slug[0]}`,
+    description: `Notes that are filtred by ${slug[0]} filter`,
     openGraph: {
-      title: `NoteHub — ${filter}`,
-      description: `Список нотаток у категорії: ${filter}.`,
-      url: `https://07-routing-nextjs-silk-five.vercel.app/notes/filter/${slug.join("/")}`,
+      title: `Filter ${slug[0]}`,
+      description: `Notes that are filtred by ${slug[0]} filter`,
+      url: `https://notehub.com/notes/filter/${slug[0]}`,
       images: [
         {
           url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
           width: 1200,
           height: 630,
-          alt: "NoteHub Notes Filter",
+          alt: "NoteHub image",
         },
       ],
     },
   };
 }
 
-export default async function Notes({ params, searchParams }: Props) {
-  const { slug } = await params;
-
-  const page = Number(searchParams?.page) || 1;
-  const query = searchParams?.query || "";
-
-  const filter = slug[0] === "All" ? undefined : slug[0];
-
+export default async function Notes({ params }: Props) {
+  const query = "";
+  const page = 1;
   const queryClient = new QueryClient();
-
+  const { slug } = await params;
+  const tag = slug[0] == "All" ? undefined : slug[0];
   await queryClient.prefetchQuery({
-    queryKey: ["notes", page, query, filter],
-    queryFn: () => fetchNotes(page, 12, query, filter),
-    staleTime: 1000 * 60,
+    queryKey: ["note", query, page, tag],
+    queryFn: () => fetchServerNotes({ query, page, tag }),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <NotesClient filter={filter} />
+      <NotesClient tag={tag} />
     </HydrationBoundary>
   );
 }

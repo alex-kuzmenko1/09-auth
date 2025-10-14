@@ -1,63 +1,55 @@
 "use client";
+import css from "./page.module.css";
+import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useDebouncedCallback } from "use-debounce";
+import Link from "next/link";
 
 import NoteList from "@/components/NoteList/NoteList";
 import Pagination from "@/components/Pagination/Pagination";
 import SearchBox from "@/components/SearchBox/SearchBox";
-import { fetchNotes } from "@/lib/api/api";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChangeEvent, useState } from "react";
-import { useDebounce } from "use-debounce";
-import Link from "next/link";
-import css from "../../[id]/NoteDetails.module.css";
 
-interface NotesClientProps {
-  filter?: string;
-}
+import { fetchNotes } from "@/lib/api/clientApi";
 
-export default function NotesClient({ filter }: NotesClientProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchNote, setSearchNote] = useState("");
-  const [updateSearchNote] = useDebounce(searchNote, 300);
+type Props = {
+  tag: string | undefined;
+};
 
+export default function NotesClient({ tag }: Props) {
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const { data } = useQuery({
-    queryKey: [
-      "notes",
-      {
-        page: currentPage,
-        search: updateSearchNote,
-        tag: filter,
-      },
-    ],
-    queryFn: () => fetchNotes(currentPage, 12, updateSearchNote, filter),
+    queryKey: ["notes", query, page, tag],
+    queryFn: () => fetchNotes({ query, page, tag }),
     placeholderData: keepPreviousData,
-    refetchOnMount: false,
   });
 
+  const totalPages = data?.totalPages ?? 0;
+
+  const handleChange = useDebouncedCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setQuery(event.target.value);
+      setPage(1);
+    },
+    1000
+  );
   return (
     <div className={css.app}>
-      <div className={css.toolbar}>
-        <SearchBox
-          value={searchNote}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setSearchNote(e.target.value);
-            setCurrentPage(1);
-          }}
-        />
-
-        {data && data?.totalPages > 1 && (
+      <header className={css.toolbar}>
+        <SearchBox value={query} onChange={handleChange} />
+        {data && totalPages > 1 && (
           <Pagination
-            pageCount={data?.totalPages}
-            forcePage={currentPage - 1}
-            onPageChange={(event) => setCurrentPage(event.selected + 1)}
-          />
-        )}
+  pageCount={totalPages}
+  forcePage={page - 1} 
+  onPageChange={({ selected }) => setPage(selected + 1)}
+/>
 
+        )}
         <Link href="/notes/action/create" className={css.button}>
           Create note +
         </Link>
-      </div>
-
-      {data && data.notes.length > 0 && <NoteList notes={data.notes} />}
+      </header>
+      {data && <NoteList notes={data.notes}></NoteList>}
     </div>
   );
 }

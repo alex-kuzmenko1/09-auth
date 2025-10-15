@@ -1,6 +1,5 @@
 "use client";
 import css from "./SignInPage.module.css";
-import { ApiError } from "@/lib/api/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
@@ -22,13 +21,10 @@ export default function SignInPage() {
       } else {
         setError("Invalid email or password");
       }
-    } catch (error) {
-      setError(
-        (error as ApiError).response?.data?.error ??
-          (error as ApiError).message ??
-          "Oops... some error"
-      );
-    }
+    } catch (err: unknown) {
+  const e = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
+  setError(e.response?.data?.error ?? e.response?.data?.message ?? e.message ?? "Oops... some error");
+}
   };
   return (
     <main className={css.mainContent}>

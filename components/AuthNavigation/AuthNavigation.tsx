@@ -7,13 +7,13 @@ import { useRouter } from "next/navigation";
 
 export default function AuthNavigation() {
   const router = useRouter();
-  const { isAuthorized, user, clearIsAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, clearIsAuthenticated } = useAuthStore();
   const handleLogout = async () => {
     await logout();
     clearIsAuthenticated();
     router.push("/sign-in");
   };
-  return isAuthorized ? (
+  return isAuthenticated ? (
     <>
       <li className={css.navigationItem}>
         <Link href="/profile" prefetch={false} className={css.navigationLink}>

@@ -9,9 +9,14 @@ export default function SignInPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const setUser = useAuthStore((state) => state.setUser);
+
   const handleSubmit = async (formData: FormData) => {
     try {
-      const formValues = Object.fromEntries(formData) as LoginRequest;
+      // Явно дістаємо поля і приводимо до string
+      const formValues: LoginRequest = {
+        email: formData.get("email")?.toString() || "",
+        password: formData.get("password")?.toString() || "",
+      };
 
       const res = await login(formValues);
 
@@ -22,10 +27,19 @@ export default function SignInPage() {
         setError("Invalid email or password");
       }
     } catch (err: unknown) {
-  const e = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
-  setError(e.response?.data?.error ?? e.response?.data?.message ?? e.message ?? "Oops... some error");
-}
+      const e = err as {
+        response?: { data?: { error?: string; message?: string } };
+        message?: string;
+      };
+      setError(
+        e.response?.data?.error ??
+          e.response?.data?.message ??
+          e.message ??
+          "Oops... some error"
+      );
+    }
   };
+
   return (
     <main className={css.mainContent}>
       <form className={css.form} action={handleSubmit}>
@@ -59,7 +73,7 @@ export default function SignInPage() {
           </button>
         </div>
 
-        <p className={css.error}>{error}</p>
+        {error && <p className={css.error}>{error}</p>}
       </form>
     </main>
   );

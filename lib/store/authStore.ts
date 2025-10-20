@@ -2,25 +2,25 @@ import { User } from "@/types/user";
 import { create } from "zustand";
 
 type AuthStore = {
-  isAuthorized: boolean;
+  isAuthenticated: boolean;
   user: User | null;
   setUser: (user: User) => void;
   clearIsAuthenticated: () => void;
 };
 
 export const useAuthStore = create<AuthStore>()((set) => ({
-  isAuthorized: false,
+  isAuthenticated: false,
   user: null,
   setUser: (user: User) => {
     set(() => ({
       user,
-      isAuthorized: true,
+      isAuthenticated: true,
     }));
   },
   clearIsAuthenticated: () => {
     set(() => ({
       user: null,
-      isAuthorized: false,
+      isAuthenticated: false,
     }));
   },
 }));

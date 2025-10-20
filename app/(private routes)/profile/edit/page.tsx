@@ -11,21 +11,23 @@ export default function Edit() {
   const { user, setUser } = useUserStore();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+
   useEffect(() => {
     getMe().then((user) => {
-      console.log("User from API:", user);
       setUsername(user.username ?? "");
       setEmail(user.email ?? "");
       setUser(user);
     });
   }, [setUser]);
 
+  
   const handleSaveUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const updatedUser = await updateMe({ username });
     setUser(updatedUser);
     router.push("/profile");
   };
+
   return (
     <main className={css.mainContent}>
       <div className={css.profileCard}>
@@ -51,7 +53,17 @@ export default function Edit() {
             />
           </div>
 
-          <p>Email: {email}</p>
+          { }
+          <div className={css.emailWrapper}>
+            <label htmlFor="email">Email:</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              className={css.input}
+              readOnly
+            />
+          </div>
 
           <div className={css.actions}>
             <button type="submit" className={css.saveButton}>

@@ -12,17 +12,14 @@ export default function SignUpPage() {
 
   const handleSubmit = async (formData: FormData) => {
     try {
-     
       const formObj = Object.fromEntries(formData) as Record<string, FormDataEntryValue>;
 
       const user: RegisterRequest = {
         email: formObj.email?.toString() ?? "",
         password: formObj.password?.toString() ?? "",
-        username: formObj.username?.toString() ?? "",
       };
 
       const res = await register(user);
-
       setUser(res);
       router.push("/profile");
     } catch (err: unknown) {
@@ -43,17 +40,6 @@ export default function SignUpPage() {
     <main className={css.mainContent}>
       <h1 className={css.formTitle}>Sign up</h1>
       <form className={css.form} action={handleSubmit}>
-        <div className={css.formGroup}>
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"
-            type="text"
-            name="username"
-            className={css.input}
-            required
-          />
-        </div>
-
         <div className={css.formGroup}>
           <label htmlFor="email">Email</label>
           <input

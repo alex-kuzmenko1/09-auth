@@ -28,7 +28,7 @@ export class ApiError<T = unknown> extends Error {
 export interface RegisterRequest {
   email: string;
   password: string;
-  username: string;
+  username?: string;
 }
 
 export interface LoginRequest {
